@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Hush Harbor</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="title-wrap">
+          <div class="badge">Lumen Guard</div>
+          <h1>Hush Harbor</h1>
+        </div>
+        <div class="stats">
+          <div class="stat-chip">
+            <span class="label">Gold</span>
+            <strong id="goldValue">180</strong>
+          </div>
+          <div class="stat-chip">
+            <span class="label">Lives</span>
+            <strong id="livesValue">12</strong>
+          </div>
+          <div class="stat-chip">
+            <span class="label">Wave</span>
+            <strong id="waveValue">0</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="game-panel">
+        <canvas id="gameCanvas" width="504" height="360" aria-label="Tower defense game board"></canvas>
+      </main>
+
+      <section class="controls-panel">
+        <div class="build-buttons" aria-label="Tower types">
+          <button class="build-btn selected" data-type="pulse">
+            <span class="dot pulse"></span>
+            Pulse
+            <small>$70</small>
+          </button>
+          <button class="build-btn" data-type="bloom">
+            <span class="dot bloom"></span>
+            Bloom
+            <small>$95</small>
+          </button>
+        </div>
+
+        <div class="action-row">
+          <button id="startWaveBtn" class="primary-btn">Start Wave</button>
+          <button id="upgradeBtn" class="secondary-btn">Upgrade</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

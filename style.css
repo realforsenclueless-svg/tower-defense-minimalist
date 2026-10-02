@@ -1,0 +1,244 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f4f2eb;
+  --panel: rgba(255, 255, 255, 0.65);
+  --panel-strong: rgba(255, 255, 255, 0.9);
+  --ink: #1d2c39;
+  --muted: #5c7281;
+  --line: #dfe7eb;
+  --path: #d7edf8;
+  --path-strong: #bbdfe9;
+  --pulse: #8cc8ff;
+  --pulse-dark: #2d7ec9;
+  --bloom: #ffd9ae;
+  --bloom-dark: #df9f40;
+  --danger: #ff7d7d;
+  --shadow: rgba(29, 44, 57, 0.08);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(149, 190, 230, 0.12), transparent 30%),
+    var(--bg);
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", sans-serif;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(560px, 100%);
+  padding: 14px 14px 16px;
+  border: 1px solid rgba(29, 44, 57, 0.06);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 40px var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: rgba(140, 200, 255, 0.14);
+  color: var(--pulse-dark);
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  letter-spacing: -0.06em;
+}
+
+.stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.stat-chip {
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--panel-strong);
+  border: 1px solid rgba(29, 44, 57, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-chip strong {
+  font-size: 1rem;
+  margin-top: 2px;
+}
+
+.game-panel {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(244,248,250,0.9));
+  border: 1px solid rgba(29, 44, 57, 0.04);
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: clamp(320px, 62vw, 420px);
+  background: linear-gradient(180deg, #f8f7f5 0%, #eef3f2 100%);
+  touch-action: none;
+}
+
+.controls-panel {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.build-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.build-btn,
+.primary-btn,
+.secondary-btn {
+  border: 1px solid rgba(29, 44, 57, 0.06);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.7);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.build-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.build-btn small {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.build-btn.selected {
+  background: rgba(140, 200, 255, 0.12);
+  border-color: rgba(45, 126, 201, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(45, 126, 201, 0.1);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.55);
+}
+
+.dot.pulse {
+  background: var(--pulse);
+}
+
+.dot.bloom {
+  background: var(--bloom);
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 13px 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.primary-btn {
+  background: linear-gradient(180deg, #dfeefb, #ccdef5);
+}
+
+.secondary-btn {
+  background: rgba(255,255,255,0.7);
+}
+
+.primary-btn:active,
+.secondary-btn:active,
+.build-btn:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 10px;
+  }
+
+  .app-shell {
+    padding: 12px 12px 14px;
+    border-radius: 20px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .stat-chip {
+    flex: 1;
+  }
+}
