@@ -7,6 +7,23 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="startScreen" class="screen-overlay">
+      <div class="screen-card">
+        <h1>Hush Harbor</h1>
+        <p class="tagline">Defend the lighthouse from the encroaching night.</p>
+        <button id="startBtn" class="btn-large">Play</button>
+        <p class="info-text">Click or tap towers to place them on the board. Start waves to send enemies down the path.</p>
+      </div>
+    </div>
+
+    <div id="gameOverScreen" class="screen-overlay hidden">
+      <div class="screen-card">
+        <h1>Harbor Lost</h1>
+        <p id="finalWave" class="tagline">Wave completed: 0</p>
+        <button id="restartBtn" class="btn-large">Try Again</button>
+      </div>
+    </div>
+
     <div class="app-shell">
       <header class="topbar">
         <div class="title-wrap">

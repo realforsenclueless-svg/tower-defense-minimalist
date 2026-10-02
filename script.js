@@ -7,6 +7,11 @@ const waveValue = document.getElementById('waveValue');
 const startWaveBtn = document.getElementById('startWaveBtn');
 const upgradeBtn = document.getElementById('upgradeBtn');
 const buildButtons = [...document.querySelectorAll('.build-btn')];
+const startScreen = document.getElementById('startScreen');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const finalWaveDisplay = document.getElementById('finalWave');
 
 const board = {
   cols: 7,
@@ -83,6 +88,8 @@ const state = {
   spawnTimer: 0,
   lastTime: 0,
   gameOver: false,
+  particles: [],
+  gameStarted: false,
 };
 
 function updateHud() {
@@ -186,6 +193,7 @@ function placeTowerAtCell(cellX, cellY) {
   const tower = makeTower(type, x, y);
   state.towers.push(tower);
   state.selectedTowerId = tower.id;
+  playSound('place');
   updateHud();
   return true;
 }
@@ -202,6 +210,8 @@ function upgradeSelectedTower() {
   tower.range *= 1.08;
   tower.fireRate *= 0.92;
   tower.upgradeCost = 35 + tower.level * 22;
+  playSound('upgrade');
+  createParticles(tower.x, tower.y, tower.color, 8);
   updateHud();
 }
 
@@ -227,6 +237,8 @@ function getPointerPosition(event) {
 }
 
 function handlePointer(event) {
+  if (!state.gameStarted || state.gameOver) return;
+
   const point = getPointerPosition(event);
   const cellX = Math.floor(point.x / board.cell);
   const cellY = Math.floor(point.y / board.cell);
@@ -257,7 +269,7 @@ buildButtons.forEach((button) => {
 });
 
 startWaveBtn.addEventListener('click', () => {
-  if (state.waveActive || state.gameOver) {
+  if (state.waveActive || state.gameOver || !state.gameStarted) {
     return;
   }
 
@@ -271,11 +283,38 @@ startWaveBtn.addEventListener('click', () => {
   }));
   state.waveActive = true;
   state.spawnTimer = 0.45;
+  playSound('wave');
   updateHud();
 });
 
 upgradeBtn.addEventListener('click', () => {
   upgradeSelectedTower();
+});
+
+startBtn.addEventListener('click', () => {
+  state.gameStarted = true;
+  state.gameOver = false;
+  startScreen.classList.add('hidden');
+  gameOverScreen.classList.add('hidden');
+  updateHud();
+});
+
+restartBtn.addEventListener('click', () => {
+  // Reset game state
+  state.gold = 180;
+  state.lives = 12;
+  state.wave = 0;
+  state.towers = [];
+  state.enemies = [];
+  state.projectiles = [];
+  state.selectedTowerId = null;
+  state.waveActive = false;
+  state.spawnQueue = [];
+  state.spawnTimer = 0;
+  state.gameOver = false;
+  state.gameStarted = true;
+  gameOverScreen.classList.add('hidden');
+  updateHud();
 });
 
 function spawnEnemy(template) {
@@ -289,6 +328,37 @@ function spawnEnemy(template) {
     distance: 0,
     radius: 12,
   });
+}
+
+function createParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 80 + Math.random() * 40;
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      age: 0,
+      life: 0.4,
+      color,
+      size: 3 + Math.random() * 2,
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.age += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 120 * dt; // gravity
+
+    if (p.age >= p.life) {
+      state.particles.splice(i, 1);
+    }
+  }
 }
 
 function updateProjectiles(dt) {
@@ -307,10 +377,13 @@ function updateProjectiles(dt) {
 
     if (distanceToTarget <= 6) {
       target.hp -= projectile.damage;
+      createParticles(target.x, target.y, 'rgba(127, 198, 181, 0.6)', 6);
       state.projectiles.splice(i, 1);
       if (target.hp <= 0) {
         state.gold += target.reward;
         state.enemies = state.enemies.filter((enemy) => enemy.id !== target.id);
+        createParticles(target.x, target.y, target.color, 10);
+        playSound('kill');
       }
       continue;
     }
@@ -333,10 +406,13 @@ function updateEnemies(dt) {
     if (enemy.distance >= pathLength) {
       state.lives -= 1;
       state.enemies.splice(i, 1);
+      playSound('lose');
       if (state.lives <= 0) {
         state.gameOver = true;
         state.waveActive = false;
         state.spawnQueue = [];
+        finalWaveDisplay.textContent = `Wave completed: ${state.wave}`;
+        gameOverScreen.classList.remove('hidden');
       }
     }
   }
@@ -375,6 +451,7 @@ function updateTowers(dt) {
     });
 
     tower.fireCooldown = tower.fireRate;
+    playSound('fire');
   }
 }
 
@@ -392,6 +469,72 @@ function updateWave(dt) {
 
   if (state.spawnQueue.length === 0 && state.enemies.length === 0) {
     state.waveActive = false;
+  }
+}
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(name) {
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+
+  const now = audioContext.currentTime;
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+
+  switch (name) {
+    case 'place':
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+      break;
+    case 'upgrade':
+      osc.frequency.setValueAtTime(660, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
+      break;
+    case 'fire':
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.05);
+      break;
+    case 'kill':
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+      break;
+    case 'wave':
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+      break;
+    case 'lose':
+      osc.frequency.setValueAtTime(100, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
+      break;
   }
 }
 
@@ -442,6 +585,16 @@ function renderGrid() {
   ctx.fill();
 }
 
+function renderParticles() {
+  for (const p of state.particles) {
+    const alpha = 1 - p.age / p.life;
+    ctx.fillStyle = p.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 function renderProjectiles() {
   for (const projectile of state.projectiles) {
     ctx.beginPath();
@@ -490,18 +643,17 @@ function renderTowers() {
 }
 
 function renderHudText() {
-  if (state.gameOver) {
-    ctx.fillStyle = 'rgba(29, 44, 57, 0.82)';
-    ctx.font = 'bold 28px Segoe UI';
+  if (!state.gameStarted) {
+    ctx.fillStyle = 'rgba(29, 44, 57, 0.15)';
+    ctx.font = '18px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText('Harbor Lost', board.width / 2, board.height / 2 - 8);
-    ctx.font = '16px Segoe UI';
-    ctx.fillText('Tap Start Wave to try again', board.width / 2, board.height / 2 + 22);
+    ctx.fillText('Click Play to begin', board.width / 2, board.height / 2);
   }
 }
 
 function draw() {
   renderGrid();
+  renderParticles();
   renderProjectiles();
   renderEnemies();
   renderTowers();
@@ -512,26 +664,27 @@ function tick(timestamp) {
   const dt = Math.min((timestamp - state.lastTime) / 1000 || 0.016, 0.031);
   state.lastTime = timestamp;
 
-  if (!state.gameOver && !state.waveActive && state.lives > 0) {
-    // idle animation is fine
-  }
-
-  if (!state.gameOver) {
+  if (!state.gameOver && state.gameStarted) {
     updateTowers(dt);
     updateWave(dt);
     updateEnemies(dt);
     updateProjectiles(dt);
+    updateParticles(dt);
   }
 
   draw();
-  updateHud();
+  if (state.gameStarted) {
+    updateHud();
+  }
   requestAnimationFrame(tick);
 }
 
 requestAnimationFrame(tick);
 
 window.addEventListener('resize', () => {
-  updateHud();
+  if (state.gameStarted) {
+    updateHud();
+  }
 });
 
 updateHud();
